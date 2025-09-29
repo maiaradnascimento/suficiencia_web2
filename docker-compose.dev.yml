@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: locadora-postgres-dev
+    environment:
+      POSTGRES_DB: locadora
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - locadora-network
+
+  server:
+    build: ./server
+    container_name: locadora-server-dev
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/locadora
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./server/src:/app/src
+      - server_target:/app/target
+    depends_on:
+      - postgres
+    networks:
+      - locadora-network
+
+  client-dev:
+    image: node:18-alpine
+    container_name: locadora-client-dev
+    working_dir: /app
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./client:/app
+    command: sh -c "npm install && npm start"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - server
+    networks:
+      - locadora-network
+
+volumes:
+  postgres_data:
+  server_target:
+
+networks:
+  locadora-network:
+    driver: bridge

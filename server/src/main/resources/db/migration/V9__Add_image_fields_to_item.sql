@@ -1,0 +1,2 @@
+ALTER TABLE item ADD COLUMN imagem BYTEA;
+ALTER TABLE item ADD COLUMN tipo_imagem VARCHAR(100);

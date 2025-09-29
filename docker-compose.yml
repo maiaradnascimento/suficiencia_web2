@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: locadora-postgres
+    environment:
+      POSTGRES_DB: locadora
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - locadora-network
+
+  server:
+    build: ./server
+    container_name: locadora-server
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/locadora
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+    ports:
+      - "8081:8080"
+    volumes:
+      - ./server/src:/app/src
+      - server_target:/app/target
+    depends_on:
+      - postgres
+    networks:
+      - locadora-network
+
+  client:
+    build: ./client
+    container_name: locadora-client
+    ports:
+      - "3001:80"
+    volumes:
+      - ./client/src:/app/src
+      - ./client/public:/app/public
+    depends_on:
+      - server
+    networks:
+      - locadora-network
+
+volumes:
+  postgres_data:
+  server_target:
+
+networks:
+  locadora-network:
+    driver: bridge
